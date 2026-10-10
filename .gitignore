@@ -1,0 +1,8 @@
+node_modules/
+dist/
+engine/
+models/
+data/
+src/vendor/
+*.log
+*.db

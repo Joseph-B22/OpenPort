@@ -1,0 +1,73 @@
+{
+  "name": "beck-open-port",
+  "version": "0.1.0",
+  "description": "Portable, offline-capable local AI chat launcher",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "postinstall": "node scripts/copy-vendor.js",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "test": "node tests/run-all.js",
+    "check": "node tests/ui-checks.js",
+    "preview": "node tests/ui-preview.js",
+    "shots": "electron tests/ui-screenshots.js"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.0",
+    "mammoth": "^1.13.0",
+    "marked": "^15.0.0",
+    "unpdf": "^1.8.1"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "local.beck.openport",
+    "productName": "OpenPort",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "db.js",
+      "embed.js",
+      "models.js",
+      "hf.js",
+      "audit.js",
+      "extract.js",
+      "summarize.js",
+      "indexer.js",
+      "ctxmem.js",
+      "focus.js",
+      "memrank.js",
+      "cmdcheck.js",
+      "pscatalog.js",
+      "ledger.js",
+      "claimprobe.js",
+      "lexical.js",
+      "netconfig.js",
+      "logtriage.js",
+      "evals.js",
+      "screenmem.js",
+      "screenhelper.js",
+      "screencapture.js",
+      "scrub.js",
+      "native/**/*",
+      "tools.js",
+      "sysstats.js",
+      "tuning.js",
+      "catalog.json",
+      "src/**/*",
+      "package.json"
+    ],
+    "asar": false,
+    "electronDist": "node_modules/electron/dist",
+    "win": {
+      "target": "dir",
+      "signAndEditExecutable": false
+    }
+  }
+}

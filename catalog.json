@@ -1,0 +1,46 @@
+{
+  "updated": "2026-10-06",
+  "note": "Recommended models. Edit freely, or replace this file to publish your own list for the team.",
+  "models": [
+    {
+      "id": "gemma-4-26b-a4b",
+      "name": "Gemma 4 26B-A4B (default)",
+      "kind": "chat",
+      "repo": "unsloth/gemma-4-26B-A4B-it-qat-GGUF",
+      "files": ["gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf", "mmproj-F16.gguf"],
+      "sizeGB": 14.4,
+      "license": "Apache 2.0",
+      "notes": "Best all-round pick: vision, fast on GPU and usable on CPU (mixture-of-experts, ~4B active)."
+    },
+    {
+      "id": "gemma-4-12b",
+      "name": "Gemma 4 12B (fast)",
+      "kind": "chat",
+      "repo": "unsloth/gemma-4-12b-it-qat-GGUF",
+      "files": ["gemma-4-12B-it-qat-UD-Q4_K_XL.gguf", "mmproj-F16.gguf"],
+      "sizeGB": 6.5,
+      "license": "Apache 2.0",
+      "notes": "Smaller and quicker. Good for laptops and for leaving room for a long context."
+    },
+    {
+      "id": "qwen3.8-27b",
+      "name": "Qwen3.8 27B (deep thinking, home)",
+      "kind": "chat",
+      "repo": "unsloth/Qwen3.8-27B-GGUF",
+      "files": ["Qwen3.8-27B-UD-IQ4_XS.gguf", "mmproj-F16.gguf"],
+      "sizeGB": 14.2,
+      "license": "Apache 2.0",
+      "notes": "Smarter on reasoning and coding in third-party tests, but dense: slower on GPU and slow on CPU."
+    },
+    {
+      "id": "embeddinggemma-2",
+      "name": "EmbeddingGemma 2 (memory search)",
+      "kind": "embed",
+      "repo": "unsloth/embeddinggemma-2-GGUF",
+      "files": ["embeddinggemma-2-Q8_0.gguf"],
+      "sizeGB": 0.3,
+      "license": "Apache 2.0",
+      "notes": "Powers chat memory. Runs on CPU."
+    }
+  ]
+}

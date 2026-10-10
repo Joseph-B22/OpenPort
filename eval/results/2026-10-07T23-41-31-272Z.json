@@ -1,0 +1,80 @@
+{
+  "when": "2026-10-07T23:41:31.272Z",
+  "B": {
+    "baseline": 0.08333333333333333,
+    "arms": [
+      {
+        "mode": "lexical",
+        "budget": 3000,
+        "chunk": 800,
+        "dims": 256,
+        "accuracy": 0.9166666666666666,
+        "avgChars": 2895
+      },
+      {
+        "mode": "lexical",
+        "budget": 6000,
+        "chunk": 800,
+        "dims": 256,
+        "accuracy": 0.9166666666666666,
+        "avgChars": 5964
+      },
+      {
+        "mode": "embed",
+        "budget": 3000,
+        "chunk": 800,
+        "dims": 256,
+        "accuracy": 1,
+        "avgChars": 2916.25
+      },
+      {
+        "mode": "embed",
+        "budget": 6000,
+        "chunk": 800,
+        "dims": 256,
+        "accuracy": 1,
+        "avgChars": 6062.166666666667
+      },
+      {
+        "mode": "hybrid",
+        "budget": 3000,
+        "chunk": 800,
+        "dims": 256,
+        "accuracy": 1,
+        "avgChars": 2915.5833333333335
+      },
+      {
+        "mode": "hybrid",
+        "budget": 6000,
+        "chunk": 800,
+        "dims": 256,
+        "accuracy": 1,
+        "avgChars": 6061.916666666667
+      },
+      {
+        "mode": "hybrid",
+        "budget": 3000,
+        "chunk": 500,
+        "dims": 256,
+        "accuracy": 0.9166666666666666,
+        "avgChars": 3002.1666666666665
+      },
+      {
+        "mode": "hybrid",
+        "budget": 3000,
+        "chunk": 1500,
+        "dims": 256,
+        "accuracy": 0.9166666666666666,
+        "avgChars": 2670.75
+      },
+      {
+        "mode": "hybrid",
+        "budget": 3000,
+        "chunk": 800,
+        "dims": 768,
+        "accuracy": 1,
+        "avgChars": 2942.5
+      }
+    ]
+  }
+}
