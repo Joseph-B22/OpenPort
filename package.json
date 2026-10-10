@@ -2,6 +2,7 @@
   "name": "beck-open-port",
   "version": "0.1.0",
   "description": "Portable, offline-capable local AI chat launcher",
+  "license": "Apache-2.0",
   "main": "main.js",
   "private": true,
   "scripts": {

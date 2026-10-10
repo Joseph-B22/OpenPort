@@ -1,0 +1,11 @@
+OpenPort
+Copyright 2026 Joseph-B22 (https://github.com/Joseph-B22)
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Not included in this repository, and covered by their own licenses:
+- llama.cpp engine builds (MIT), downloaded by scripts/fetch-engine.ps1
+- Model weights such as Gemma 4 and EmbeddingGemma (see each model's license on Hugging Face), downloaded by
+  scripts/fetch-model.ps1 or the Models dialog
+- npm dependencies, including marked (MIT), DOMPurify (Apache-2.0 / MPL-2.0), mammoth (BSD-2-Clause),
+  unpdf (MIT) and Electron (MIT), installed by npm install
