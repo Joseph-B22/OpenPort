@@ -52,9 +52,12 @@ const shots = [
   { name: '08b-claim-check', w: 1280, h: 860, theme: 'light', js: CLAIM_DEMO },
   { name: '08c-claim-check-dark', w: 1280, h: 860, theme: 'dark', js: CLAIM_DEMO },
   { name: '16b-memory-mistake-log', w: 1280, h: 860, theme: 'light', js: `document.getElementById('open-memory').click(); await new Promise(r => setTimeout(r, 600)); document.getElementById('led-stats').scrollIntoView({ block: 'start' }); document.querySelector('#mem-dlg .dlg-body').scrollTop -= 60; await new Promise(r => setTimeout(r, 200));` },
-  { name: '10-settings-top', w: 1280, h: 860, theme: 'light', js: `config = await openport.getConfig(); await openSettings(); await new Promise(r => setTimeout(r, 400));` },
-  { name: '11-settings-middle', w: 1280, h: 860, theme: 'light', js: `config = await openport.getConfig(); await openSettings(); await new Promise(r => setTimeout(r, 300)); document.getElementById('settings-form').scrollTop = 900; await new Promise(r => setTimeout(r, 300));` },
-  { name: '12-settings-bottom-dark', w: 1280, h: 860, theme: 'dark', js: `config = await openport.getConfig(); await openSettings(); await new Promise(r => setTimeout(r, 300)); document.getElementById('settings-form').scrollTop = 99999; await new Promise(r => setTimeout(r, 300));` },
+  { name: '10-settings-appearance', w: 1280, h: 860, theme: 'light', js: `config = await openport.getConfig(); await openSettings(); showSettingsPane('appearance'); await new Promise(r => setTimeout(r, 500));` },
+  { name: '11-settings-engine', w: 1280, h: 860, theme: 'light', js: `config = await openport.getConfig(); await openSettings(); showSettingsPane('engine'); await new Promise(r => setTimeout(r, 500));` },
+  { name: '11b-settings-checks', w: 1280, h: 860, theme: 'light', js: `config = await openport.getConfig(); await openSettings(); showSettingsPane('checks'); await new Promise(r => setTimeout(r, 500));` },
+  { name: '11c-settings-search', w: 1280, h: 860, theme: 'light', js: `config = await openport.getConfig(); await openSettings(); showSettingsPane('appearance'); const q = document.getElementById('set-q'); q.value = 'memory'; q.dispatchEvent(new Event('input')); await new Promise(r => setTimeout(r, 500));` },
+  { name: '12-settings-appearance-dark-purple', w: 1280, h: 860, theme: 'dark', js: `applyAppearance({"accent":"purple"}, { save: false, animate: false }); await new Promise(r => setTimeout(r, 150)); config = await openport.getConfig(); await openSettings(); showSettingsPane('appearance'); await new Promise(r => setTimeout(r, 500));` },
+  { name: '12b-settings-memory-dark', w: 1280, h: 860, theme: 'dark', js: `config = await openport.getConfig(); await openSettings(); showSettingsPane('memory'); await new Promise(r => setTimeout(r, 500));` },
   { name: '13-models', w: 1280, h: 860, theme: 'light', js: `document.getElementById('open-models').click(); await new Promise(r => setTimeout(r, 600));` },
   { name: '14-models-add-dark', w: 1280, h: 860, theme: 'dark', js: `document.getElementById('open-models').click(); await new Promise(r => setTimeout(r, 400)); document.querySelector('.tab[data-tab="add"]').click(); await new Promise(r => setTimeout(r, 600));` },
   { name: '15-model-tests', w: 1280, h: 860, theme: 'light', js: `document.getElementById('open-tests').click(); await new Promise(r => setTimeout(r, 600));` },
@@ -64,9 +67,15 @@ const shots = [
   { name: '19-timeline', w: 1280, h: 860, theme: 'light', js: `document.getElementById('open-timeline').click(); await new Promise(r => setTimeout(r, 600));` },
   { name: '20-context-map', w: 1280, h: 860, theme: 'light', js: openChat + `await new Promise(r => setTimeout(r, 500)); document.getElementById('ctx-meter').click(); await new Promise(r => setTimeout(r, 600));` },
   { name: '21-activity-log', w: 1280, h: 860, theme: 'light', js: `config = await openport.getConfig(); await openSettings(); await new Promise(r => setTimeout(r, 300)); document.getElementById('s-audit').click(); await new Promise(r => setTimeout(r, 600));` },
-  { name: '22-narrow-settings', w: 640, h: 860, theme: 'light', js: `config = await openport.getConfig(); await openSettings(); await new Promise(r => setTimeout(r, 400));` },
+  { name: '22-narrow-settings', w: 640, h: 860, theme: 'light', js: `config = await openport.getConfig(); await openSettings(); showSettingsPane('appearance'); await new Promise(r => setTimeout(r, 500));` },
   { name: '30-work-start', w: 1280, h: 800, theme: 'light', q: '?work', js: openChat },
-  { name: '31-work-settings', w: 1280, h: 860, theme: 'light', q: '?work', js: `config = await openport.getConfig(); await openSettings(); await new Promise(r => setTimeout(r, 300)); document.getElementById('settings-form').scrollTop = 700; await new Promise(r => setTimeout(r, 300));` },
+  { name: '31-work-settings', w: 1280, h: 860, theme: 'light', q: '?work', js: `config = await openport.getConfig(); await openSettings(); showSettingsPane('screen'); await new Promise(r => setTimeout(r, 500));` },
+  { name: '23-palette', w: 1280, h: 800, theme: 'light', js: `openPalette(); await new Promise(r => setTimeout(r, 400));` },
+  { name: '24-palette-search-dark', w: 1280, h: 800, theme: 'dark', js: `openPalette(); const q = document.getElementById('pal-q'); q.value = 'theme'; q.dispatchEvent(new Event('input')); await new Promise(r => setTimeout(r, 400));` },
+  { name: '25-shortcuts', w: 1280, h: 800, theme: 'dark', js: `document.getElementById('keys-dlg').showModal(); await new Promise(r => setTimeout(r, 400));` },
+  { name: '26-start-dark-oled-orange', w: 1280, h: 800, theme: 'dark', js: `applyAppearance({"style":"oled","accent":"orange"}, { save: false, animate: false }); await new Promise(r => setTimeout(r, 150)); ` },
+  { name: '27-chat-light-solid-green', w: 1280, h: 800, theme: 'light', js: `applyAppearance({"style":"solid","accent":"green"}, { save: false, animate: false }); await new Promise(r => setTimeout(r, 150)); ` + openChat },
+  { name: '28-chat-dark-pink', w: 1280, h: 800, theme: 'dark', js: `applyAppearance({"accent":"pink"}, { save: false, animate: false }); await new Promise(r => setTimeout(r, 150)); ` + openChat },
 ];
 
 app.whenReady().then(async () => {
@@ -79,6 +88,7 @@ app.whenReady().then(async () => {
     const win = new BrowserWindow({ width: s.w, height: s.h, show: false, useContentSize: true, webPreferences: { sandbox: true, backgroundThrottling: false, offscreen: true } });
     const errors = [];
     win.webContents.on('console-message', (e, level, msg) => { const lv = e.level ?? level; if (lv === 'error' || lv === 3) errors.push(e.message ?? msg); });
+    await win.webContents.session.clearStorageData({ storages: ['localstorage'] });   // each shot starts with default appearance
     for (let i = 0; ; i++) { try { await win.loadURL(BASE + (s.q || '')); break; } catch (e) { if (i > 4) throw e; await sleep(800); } }
     await sleep(700);
     try { await win.webContents.executeJavaScript(`(async () => { ${s.js} })()`); } catch (e) { errors.push('setup: ' + e.message); }

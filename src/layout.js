@@ -17,10 +17,24 @@
   // Picking a chat or starting a new one closes the drawer on a narrow window.
   $('chat-list').addEventListener('click', e => { if (narrow.matches && e.target.closest('.chat-item') && !e.target.closest('.x')) closeDrawer(); });
   $('new-chat').addEventListener('click', () => { if (narrow.matches) closeDrawer(); });
+  // Keyboard shortcuts (also listed in Settings → About and Ctrl+/).
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && body.classList.contains('side-open')) closeDrawer();
-    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'n') { e.preventDefault(); $('new-chat').click(); }
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === 'k' && !e.shiftKey) { e.preventDefault(); openPalette(); }
+    else if (k === 'n' && !e.shiftKey) { e.preventDefault(); document.querySelectorAll('dialog[open]').forEach(d => d.close()); $('new-chat').click(); }
+    else if (k === ',') { e.preventDefault(); if (!$('settings').open) openSettingsPane(); }
+    else if (k === 'b' && !e.shiftKey) { e.preventDefault(); $('side-toggle').click(); }
+    else if (k === '/') { e.preventDefault(); const d = $('keys-dlg'); if (d.open) d.close(); else { document.querySelectorAll('dialog[open]').forEach(x => x.close()); d.showModal(); } }
   });
+
+  // "Jump to latest" appears when you've scrolled up; while you read older messages, streaming no longer yanks you down.
+  const msgs = $('messages'), toBottom = $('to-bottom');
+  const update = () => { toBottom.hidden = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 240; };
+  msgs.addEventListener('scroll', update, { passive: true });
+  new MutationObserver(update).observe(msgs, { childList: true });
+  toBottom.onclick = () => msgs.scrollTo({ top: msgs.scrollHeight, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 
   // Top bar title follows the highlighted chat in the list.
   const title = $('top-title');

@@ -17,16 +17,31 @@ let currentChatId = null;
 
 // ---- rendering ----
 function render(md) { return DOMPurify.sanitize(marked.parse(md, { breaks: true })); }
+// Code blocks get a header bar: the language (from marked's "language-x" class) and a Copy button. The header sits inside
+// <pre> before <code>, so everything that reads "pre > code" (edit check, command underlines) is unaffected.
 function addCopyButtons(root) {
   root.querySelectorAll('pre').forEach(pre => {
-    if (pre.querySelector('.copy')) return;
+    if (pre.querySelector('.code-head')) return;
+    const code = pre.querySelector('code');
+    const lang = ((code?.className || '').match(/language-([\w+#-]+)/) || [])[1] || 'text';
+    const head = document.createElement('div'); head.className = 'code-head';
+    const l = document.createElement('span'); l.className = 'code-lang'; l.textContent = lang;
     const b = document.createElement('button');
     b.className = 'copy'; b.type = 'button'; b.textContent = 'Copy';
-    b.onclick = () => { navigator.clipboard.writeText(pre.innerText.replace(/Copy$/, '').trim()); b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1200); };
-    pre.appendChild(b);
+    b.onclick = () => {
+      navigator.clipboard.writeText((code || pre).textContent.replace(/\n$/, ''));
+      b.textContent = 'Copied ✓'; b.classList.add('done');
+      setTimeout(() => { b.textContent = 'Copy'; b.classList.remove('done'); }, 1400);
+    };
+    head.append(l, b);
+    pre.prepend(head);
   });
 }
-function scrollDown() { els.messages.scrollTop = els.messages.scrollHeight; }
+// Keep following the conversation only while you are near the bottom; force=true for a new message or a freshly opened chat.
+function scrollDown(force = false) {
+  const m = els.messages;
+  if (force || m.scrollHeight - m.scrollTop - m.clientHeight < 160) m.scrollTop = m.scrollHeight;
+}
 
 function addMessage(role, text, images = []) {
   const wrap = document.createElement('div');
@@ -43,7 +58,7 @@ function addMessage(role, text, images = []) {
   else if (text) { content.innerHTML = render(text); addCopyButtons(content); }
   els.messages.querySelector('.empty')?.remove();
   els.messages.appendChild(wrap);
-  scrollDown();
+  scrollDown(true);
   return { body, content, recall };
 }
 
@@ -66,12 +81,17 @@ function showRecall(slot, hits) {
 
 function showEmpty() {
   // Static markup only (no user or model text). The suggestion buttons fill the message box (layout.js); they never send.
-  els.messages.innerHTML = '<div class="empty"><div class="empty-mark" aria-hidden="true"></div><h1>How can I help?</h1>' +
-    '<p>Runs on this computer. Your chats and files never leave it.</p><div class="suggestions">' +
-    '<button type="button" class="suggest" data-prompt="Explain what this error means and how to fix it:\n\n">Explain an error message</button>' +
-    '<button type="button" class="suggest" data-prompt="Review this config and point out anything risky or wrong:\n\n">Review a config</button>' +
-    '<button type="button" class="suggest" data-prompt="Write a PowerShell script that ">Write a PowerShell script</button>' +
-    '<button type="button" class="suggest" data-prompt="Summarize the attached document in five bullet points.">Summarize a document</button>' +
+  const h = new Date().getHours();
+  const greet = h < 5 ? 'Working late?' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  const card = (prompt, icon, title, sub) => `<button type="button" class="suggest" data-prompt="${prompt}"><span class="sg-ic">${icon}</span>` +
+    `<span class="sg-t"><b>${title}</b><small>${sub}</small></span></button>`;
+  const ic = d => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+  els.messages.innerHTML = '<div class="empty"><div class="empty-glow" aria-hidden="true"></div><div class="empty-mark" aria-hidden="true"></div>' +
+    `<h1>${greet}</h1><p>How can I help? Everything stays on this computer.</p><div class="suggestions">` +
+    card('Explain what this error means and how to fix it:\n\n', ic('<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.5"/>'), 'Explain an error', 'Paste it: get the cause and the fix') +
+    card('Review this config and point out anything risky or wrong:\n\n', ic('<path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.2 7.5 9.5 4.4-1.3 7.5-4.9 7.5-9.5V6Z"/><path d="m8.8 12 2.3 2.3 4.2-4.6"/>'), 'Review a config', 'Risks, mistakes, and what to fix') +
+    card('Write a PowerShell script that ', ic('<rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 9 3 3-3 3M12.5 15H17"/>'), 'Write a script', 'Checked against this PC\'s PowerShell') +
+    card('Summarize the attached document in five bullet points.', ic('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>'), 'Summarize a document', 'Word, PDF, logs or notes') +
     '</div></div>';
 }
 
@@ -103,13 +123,38 @@ els.models.onchange = () => openport.startEngine(els.models.value);
 $('model-toggle').onclick = () => (engine.status === 'ready' ? openport.stopEngine() : openport.startEngine(els.models.value));
 
 // ---- chat list ----
+// Chat list, grouped like Today / Yesterday / Previous 7 days / Previous 30 days / month, with a small "last used" label.
+function chatGroup(ts, now = new Date()) {
+  const day = 86400000, start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (ts >= start) return 'Today';
+  if (ts >= start - day) return 'Yesterday';
+  if (ts >= start - 7 * day) return 'Previous 7 days';
+  if (ts >= start - 30 * day) return 'Previous 30 days';
+  const d = new Date(ts);
+  return d.toLocaleDateString([], { month: 'long', ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) });
+}
+function chatWhen(ts, now = new Date()) {
+  const d = new Date(ts), group = chatGroup(ts, now);
+  if (group === 'Today') return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  if (group === 'Yesterday') return 'Yesterday';
+  if (group === 'Previous 7 days') return d.toLocaleDateString([], { weekday: 'short' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
 async function refreshChats() {
   const chats = await openport.chats.list(els.chatSearch.value);
   els.chatList.innerHTML = '';
+  let lastGroup = null;
   for (const c of chats) {
+    const group = chatGroup(c.updated);
+    if (group !== lastGroup) {
+      const g = document.createElement('div'); g.className = 'chat-group'; g.textContent = group;
+      els.chatList.appendChild(g); lastGroup = group;
+    }
     const row = document.createElement('div');
     row.className = 'chat-item' + (c.id === currentChatId ? ' active' : '');
     const t = document.createElement('span'); t.className = 't'; t.textContent = c.title; t.title = c.title;
+    const when = document.createElement('span'); when.className = 'when'; when.textContent = chatWhen(c.updated);
+    when.title = `Last used ${new Date(c.updated).toLocaleString()}`;
     const x = document.createElement('button'); x.className = 'x'; x.type = 'button'; x.textContent = '✕'; x.title = 'Delete chat';
     x.onclick = async e => {
       e.stopPropagation();
@@ -117,7 +162,7 @@ async function refreshChats() {
       if (c.id === currentChatId) newChat();
       refreshChats();
     };
-    row.append(t, x);
+    row.append(t, when, x);
     row.onclick = () => openChat(c.id);
     els.chatList.appendChild(row);
   }
@@ -145,7 +190,7 @@ async function openChat(id) {
     addMessage(m.role, v.text, v.images);
   }
   refreshChats();
-  scrollDown();
+  scrollDown(true);
   syncAllTurns();
   windowStart = 0; lastVolatile = ''; lastTimings = null; prefetch = null;
   updateMeter();
@@ -471,10 +516,12 @@ async function stream(out, userText, hits) {
   const draw = () => {
     thinkBox.innerHTML = thinking
       ? `<details class="think"><summary>Thinking…</summary>${DOMPurify.sanitize(thinking).replace(/\n/g, '<br>')}</details>` : '';
-    ansBox.innerHTML = render(answer || '…');
+    // Before the first word: three soft "typing" dots (static markup). While streaming: a caret after the last word (CSS).
+    ansBox.innerHTML = answer ? render(answer) : '<span class="typing" aria-label="Thinking"><i></i><i></i><i></i></span>';
     addCopyButtons(ansBox);
     scrollDown();
   };
+  ansBox.classList.add('answer', 'streaming');
   draw();
 
   // A pre-read started while typing is cancelled; the real request takes over (the engine keeps what it already read).
@@ -613,6 +660,7 @@ async function stream(out, userText, hits) {
       history.pop();                                     // drop unanswered user turn from context
     }
     draw();
+    ansBox.classList.remove('streaming');
     if (smart().confidence && answer) showConfidence(ansBox, confBox, confEntries, probsSkipped);
     if (answer) checkCommandsIn(ansBox, cmdBox, answer, { question: userText, model: engine.model, shownIds: lessons.map(l => l.id) });   // async
     if (answer) {
@@ -665,7 +713,7 @@ function showConfidence(root, note, entries, skipped = false) {
   }
   const words = Confidence.toWords(entries);
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-    acceptNode: n => (n.parentElement.closest('.copy') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+    acceptNode: n => (n.parentElement.closest('.copy, .code-head') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
   });
   const nodes = []; let text = '';
   for (let n; (n = walker.nextNode());) { nodes.push({ node: n, start: text.length }); text += n.nodeValue; }

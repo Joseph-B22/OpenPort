@@ -12,6 +12,11 @@ built around one idea:
 
 ![A chat in OpenPort](ui-screenshots/03-chat-light.png)
 
+<p align="center">
+  <img src="ui-screenshots/02-start-dark.png" width="49%" alt="Dark glass theme" />
+  <img src="ui-screenshots/12-settings-appearance-dark-purple.png" width="49%" alt="Settings: appearance" />
+</p>
+
 ## What makes it different
 
 ### 1. Command checker: catches invented PowerShell
@@ -62,7 +67,10 @@ fits a 32 GB laptop next to Outlook and Teams.
 - **Model tests**: your own checkable questions, run against any model before you switch.
 - **Optional screen memory** (home edition, off by default): text of the window you're working in, read by Windows OCR, scrubbed of secrets, no images stored, always-visible recording indicator.
 - **Read-only PC lookups** for the model: service status (including a "which third-party services are running" view), installed updates, paths.
-- **Activity log** of everything the app did (never chat text or file contents), a RAM/VRAM meter, light and dark themes.
+- **Activity log** of everything the app did (never chat text or file contents) and a RAM/VRAM meter.
+- **A premium, fast interface**: light/dark/auto themes, 8 accent colours, Glass / Solid / OLED styles, text sizes, a command
+  palette (Ctrl+K), System-Settings-style settings with search, date-grouped chat history, and animations that stay light enough
+  to run without GPU acceleration.
 
 ## Privacy
 

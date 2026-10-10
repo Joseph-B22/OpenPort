@@ -67,20 +67,36 @@ llama.cpp build 11457, Gemma 4 26B-A4B (Q4_K_XL), 2026-10-09:
 
 - `main.js`: Electron main process: window, engine start/stop, every IPC handler, tray, hotkeys, config (`data\config.json`).
 - `preload.js`: the **only** bridge: exposes `window.openport.*` to the page. If you add a backend call, add it here **and** to the stand-in in `tests/ui-preview.js`.
-- `src/`: the whole interface. `index.html` (all markup, all dialogs), `styles.css`, and plain scripts sharing one global scope: `promptplan.js`, `confidence.js`, `attrib.js`, `memfacts.js`, `app.js` (chat, settings, streaming), `ctxmap.js`, `models-ui.js`, `tests-ui.js`, `cart-ui.js`, `screen-ui.js`, `memory-ui.js`, `cmdcheck-ui.js`, `provenance.js` + `provenance-ui.js`, `claims.js` + `claims-ui.js`, `layout.js`, `resmeter.js`.
+- `src/`: the whole interface. `index.html` (all markup, all dialogs), `styles.css`, and plain scripts sharing one global scope: `promptplan.js`, `confidence.js`, `attrib.js`, `memfacts.js`, `app.js` (chat, settings, streaming), `ctxmap.js`, `models-ui.js`, `tests-ui.js`, `cart-ui.js`, `screen-ui.js`, `memory-ui.js`, `cmdcheck-ui.js`, `provenance.js` + `provenance-ui.js`, `claims.js` + `claims-ui.js`, `layout.js`, `resmeter.js`, `appearance.js`, `settings-ui.js`, `palette.js` (plus `theme-boot.js` in `<head>`).
 - Backend modules: `db.js` (SQLite: chats, memory vectors, facts, mistake log, folder index, screen moments), `memrank.js` (time-aware recall), `cmdcheck.js` + `pscatalog.js`, `ledger.js`, `claimprobe.js`, `tuning.js`, `sysstats.js` (RAM/VRAM meter), `embed.js` (EmbeddingGemma 2), `tools.js` + `netconfig.js` + `logtriage.js` (tools the model can call), `screenmem.js` + `scrub.js` + `screenhelper.js` + `screencapture.js` + `native/screen-helper.ps1` (screen memory), `evals.js` (model tests), `hf.js` + `models.js` (model manager), `audit.js`.
 - Data lives next to the app and is git-ignored: `data\` (chats.db, config.json, audit.log, cartridges, bench results), `models\`, `engine\`. The `OPENPORT_DATA` env var points tests at a throwaway data folder.
 
 ## The interface
 
-Clean macOS-like style: system font stack, design tokens on `:root`, grouped settings cards, switches on `.check` checkboxes,
-segmented tabs, inline SVG icons (`class="i"`). Screenshots: `ui-screenshots\`.
-Sidebar: brand, New chat, chat search, chat list, model card (dropdown + status + Load/Unload), the red screen-memory pill
-(home, only when on), nav: Models, Model tests, Memory, Cartridges, Screen timeline (home), Settings. At ≤760 px the sidebar is a
-slide-over drawer (`body.side-open`, `#scrim`); above that `#side-toggle` collapses it.
-Main area: top bar (`#side-toggle`, `#top-title`, `#res-meter` RAM/VRAM, "On this device"), messages (answers with notes for each
-check below them), starter chips on the empty screen, `#banner`, the composer card, `#ctx-meter`.
-Dialogs (`<dialog>`): settings, models, model tests, memory (incl. mistake log), cartridges, screen timeline, context map, activity log.
+Premium macOS/visionOS-style design system (2026-10-10). Appearance lives as attributes on `<html>`, set before the first paint by
+`src/theme-boot.js` (from localStorage) and by `src/appearance.js` (from `config.appearance`):
+`data-theme` auto|light|dark, `data-accent` blue|indigo|purple|pink|orange|green|teal|graphite, `data-style` glass|solid|oled,
+`data-text` s|m|l, `data-motion` reduced. All colours are tokens in `styles.css`; components only use tokens.
+
+**Performance rules** (the app runs without GPU acceleration by default, so the CPU draws everything): "glass" = translucent
+surfaces over a static, smooth colour field; **no `backdrop-filter` on anything that scrolls** (only the dialog backdrop); animate
+only `transform`/`opacity`; no infinite animations on large areas; honour `prefers-reduced-motion` and `data-motion="reduced"`.
+
+- Sidebar: brand, New chat, search, chat list grouped Today / Yesterday / Previous 7 days / Previous 30 days / month with a small
+  "last used" label (`chatGroup`/`chatWhen` in app.js), model card, screen-memory pill (home), nav. ≤760 px: slide-over drawer.
+- Top bar: sidebar toggle, chat title, RAM/VRAM meter, search pill (`#palette-btn`, Ctrl+K), theme toggle (`#theme-toggle`, cycles
+  Auto → Light → Dark), "On this device".
+- Messages: code blocks get a header with language + Copy (`addCopyButtons`; header is `.code-head` inside `<pre>` before
+  `<code>`, so `pre > code` consumers are unaffected and text walkers skip `.code-head`); typing dots before the first token and a
+  caret while streaming (`.answer.streaming`); auto-scroll only when near the bottom, plus a "jump to latest" button (`#to-bottom`).
+- Empty state: time-of-day greeting and four suggestion cards (fill the box, never send).
+- Command palette (`src/palette.js`, `#palette`): actions, settings, themes, accents and chats with fuzzy search.
+- Settings (`src/settings-ui.js`): System-Settings layout, category nav (`#set-nav`, `.set-pane[data-pane]`), search across
+  panes (`#set-q`), rows = `.check` (switch) / `.set-row` / `.field.row` with `<span class="st"><b>title</b><small>help</small></span>`.
+  Appearance controls (`.seg-ctl[data-key]` pill sliders, `#ap-accent` swatches) apply and save immediately; everything else uses Save.
+- Shortcuts: Ctrl+K palette, Ctrl+N new chat, Ctrl+, settings, Ctrl+B sidebar, Ctrl+/ shortcuts sheet (`#keys-dlg`).
+- Dialogs (`<dialog>`): settings, palette, shortcuts, models, model tests, memory (incl. mistake log), cartridges, screen timeline,
+  context map, activity log.
 
 ## HARD RULES for any interface change
 
@@ -88,7 +104,7 @@ Dialogs (`<dialog>`): settings, models, model tests, memory (incl. mistake log),
 2. **Element ids are an API.** The scripts find elements by id (`$('send')`, `S('s-sm-on')`...). Renaming or deleting an id breaks features silently. Restyle freely, but keep every id (or change the script and the HTML together) and run `npm run check`.
 3. **Never put untrusted text into `innerHTML`.** Model answers, file contents, OCR text, window titles and Hugging Face results are untrusted: use `textContent` / DOM building. Markdown goes through `marked` + `DOMPurify` only.
 4. **Keep the privacy safeguards visible.** Screen memory always shows its recording indicator (sidebar pill + tray); deletion actions keep their confirmation; the "OCR can misread characters" and "double-check this value" warnings stay. The work edition hides all screen-memory UI (`allowScreenMemory: false`) and that must keep working (`/?work` in the preview).
-5. **Light and dark themes** both work via CSS variables and `prefers-color-scheme`. Keep both. Must stay usable at about 650 px wide and on a laptop screen.
+5. **Every theme combination must work**: light/dark/auto × 8 accents × glass/solid/OLED, via tokens only (no hard-coded colours in components). Must stay usable at about 650 px wide and on a laptop screen. Follow the performance rules above.
 6. **No heavy frameworks or build steps** unless clearly worth it: vanilla JS, loads offline, packaged with `asar: false`. If you add a library, vendor it locally (see `scripts/copy-vendor.js`) and keep the CSP unchanged.
 7. Don't rename IPC channels or `window.openport` functions without updating `preload.js`, `main.js` and the stand-in in `tests/ui-preview.js`.
 

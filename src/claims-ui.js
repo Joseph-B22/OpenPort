@@ -61,7 +61,7 @@ async function checkClaimsIn(root, box, answer, meta = {}) {
 function markMentions(root, items) {
   if (!items.length) return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-    acceptNode: n => (n.parentElement.closest('.copy, .claim-mark, .cmd-bad, .cmd-unverified') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+    acceptNode: n => (n.parentElement.closest('.copy, .code-head, .claim-mark, .cmd-bad, .cmd-unverified') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
   });
   const nodes = [];
   for (let n; (n = walker.nextNode());) nodes.push(n);

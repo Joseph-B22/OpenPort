@@ -26,7 +26,11 @@ window.openport = {
       { id: 'c2', title: 'Switch cabling for the new rack', updated: Date.now() - 86400e3 },
       { id: 'c3', title: 'PowerShell: find stale AD accounts', updated: Date.now() - 3 * 86400e3 },
       { id: 'c4', title: 'Review firewall rule export', updated: Date.now() - 9 * 86400e3 },
-    ].filter(c => !q || c.title.toLowerCase().includes(q.toLowerCase())),
+      { id: 'c5', title: 'Cisco 8300 baseline config', updated: Date.now() - 2 * 3600e3 },
+      { id: 'c6', title: 'Why is the Spooler crashing?', updated: Date.now() - 4 * 86400e3 },
+      { id: 'c7', title: 'BitLocker recovery key steps', updated: Date.now() - 21 * 86400e3 },
+      { id: 'c8', title: 'DHCP scope exhaustion on VLAN 30', updated: Date.now() - 48 * 86400e3 },
+    ].filter(c => !q || c.title.toLowerCase().includes(q.toLowerCase())).sort((a, b) => b.updated - a.updated),
     get: async id => id !== 'c1' ? [] : [
       { id: 1, role: 'user', content: 'Clients at the branch can ping 10.20.0.10 but nslookup times out. What should I check?' },
       { id: 2, role: 'assistant', content: 'If ping works but DNS lookups time out, the path is fine and the problem is the DNS service or the port.\\n\\n1. **Test UDP/TCP 53 directly** from a client:\\n\\n\`\`\`powershell\\nResolve-DnsName example.com -Server 10.20.0.10 -DnsOnly\\nTest-NetConnection 10.20.0.10 -Port 53\\n\`\`\`\\n\\n2. **Check the DNS Server service** on 10.20.0.10 (\`Get-Service DNS\`).\\n3. **Look for a firewall rule** blocking 53 between the branch VLAN and the server.\\n\\n| Check | Expected |\\n|---|---|\\n| Port 53 TCP | \`TcpTestSucceeded : True\` |\\n| Service | Running |' },

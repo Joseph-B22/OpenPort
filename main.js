@@ -62,6 +62,7 @@ const DEFAULT_CONFIG = {
   checkClaims: true,          // after each answer, check facts it states about this PC (services, updates, paths, values in your files)
   pcTool: true,               // let the model look up this PC's services, updates and paths itself (read-only tool check_this_pc)
   tuning: { kvCache: 'f16', copyAhead: false, copyAheadType: 'ngram-simple', cpuLowMemory: true },   // see tuning.js; changing it restarts the model
+  appearance: { mode: 'auto', accent: 'blue', style: 'glass', text: 'm', motion: 'full' },   // Settings → Appearance (appearance.js)
   showResourceMeter: true,    // small RAM / graphics-memory meter in the top bar (updates every 5 s, only while the window is visible)
   promptCacheMB: 2048,        // RAM the engine may use to remember recent prompts (engine default is 8192)
   // Experimental: use the embedding model to make a small context window go further. Both off by default.

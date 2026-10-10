@@ -8,6 +8,7 @@
   <meta name="color-scheme" content="light dark" />
   <title>OpenPort</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="theme-boot.js"></script>
 </head>
 <body>
   <aside id="sidebar" aria-label="Chats and tools">
@@ -53,12 +54,23 @@
       </button>
       <div id="top-title" class="top-title">New chat</div>
       <div id="res-meter" class="res-meter" hidden></div>
+      <button type="button" id="palette-btn" class="palette-btn" title="Search actions, settings and chats (Ctrl+K)">
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span><kbd>Ctrl K</kbd>
+      </button>
+      <button type="button" id="theme-toggle" class="icon-btn theme-toggle" aria-label="Change theme">
+        <svg class="i sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="i moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"/></svg>
+        <svg class="i auto" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17A8.5 8.5 0 0 0 12 3.5Z" class="fill"/></svg>
+      </button>
       <div class="top-badge" title="OpenPort runs the model on this computer. Chats are stored in data\chats.db next to the app.">
         <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>On this device</span>
       </div>
     </header>
 
     <div id="messages"></div>
+    <button type="button" id="to-bottom" class="to-bottom" title="Jump to the latest message" aria-label="Jump to the latest message" hidden>
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+    </button>
     <div id="banner" hidden></div>
 
     <form id="composer">
@@ -87,142 +99,231 @@
     </form>
   </main>
 
-  <dialog id="settings">
+  <dialog id="settings" aria-label="Settings">
     <form method="dialog" id="settings-form">
-      <h2>Settings</h2>
-
-      <section>
-        <h3>Engine</h3>
-        <label class="field">Run on
-          <select id="s-backend">
-            <option value="auto">Auto (GPU if available)</option>
-            <option value="gpu">GPU (Vulkan)</option>
-            <option value="cpu">CPU only</option>
-          </select>
+      <aside class="set-side">
+        <h2>Settings</h2>
+        <label class="search set-search">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="set-q" type="search" placeholder="Search settings" aria-label="Search settings" />
         </label>
-        <div id="s-backend-note" class="hint"></div>
-        <label class="field">Context size (tokens)
-          <select id="s-context">
-            <option value="4096">4,096</option>
-            <option value="8192">8,192</option>
-            <option value="16384">16,384</option>
-            <option value="32768">32,768</option>
-            <option value="65536">65,536</option>
-          </select>
-        </label>
-        <div class="hint">Larger = longer chats but more VRAM/RAM. Changing engine settings restarts the model.</div>
-        <label class="field">Conversation memory precision (KV cache)
-          <select id="s-kvcache">
-            <option value="f16">16-bit (default)</option>
-            <option value="q8_0">8-bit: about half the memory for long chats and documents</option>
-          </select>
-        </label>
-        <label class="check"><input type="checkbox" id="s-cpulowmem" /> CPU low-memory mode: on the CPU engine, read the model straight from its file instead of keeping a second, CPU-optimised copy (26B: 23 GB → 14 GB of RAM, loads in 3 s instead of 13 s; long prompts are read about 30% slower)</label>
-        <label class="check"><input type="checkbox" id="s-copyahead" /> Copy-ahead (experimental): faster answers when the reply repeats text from your message or files, like fixing a config or rewriting a script</label>
-        <div id="s-tuning-note" class="hint">Measured on this PC (Gemma 4 26B, GPU): copy-ahead made "fix this config and return it" about 6x faster (64 → 396 tokens/s) with identical answers, and did not slow normal chat. 8-bit memory saved little at 8K context with this model but was 5–25% faster, with identical answers and 12/12 on the starter tests. Copy-ahead copies likely next words from the prompt and the model checks them, so the answer does not change, only the speed.</div>
-        <label class="check"><input type="checkbox" id="s-resmeter" /> Show memory use (RAM and graphics memory) in the top bar. Updates every 5 seconds, only while the window is visible.</label>
-        <label class="check"><input type="checkbox" id="s-autoload" /> Load the chat model when OpenPort starts (turn off to start light and load it from the sidebar)</label>
-      </section>
+        <nav id="set-nav" class="set-nav">
+          <button type="button" data-pane="appearance"><span class="nav-ic c-indigo"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17A8.5 8.5 0 0 0 12 3.5Z" class="fill"/></svg></span>Appearance</button>
+          <button type="button" data-pane="general"><span class="nav-ic c-gray"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>General</button>
+          <button type="button" data-pane="engine"><span class="nav-ic c-blue"><svg class="i" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg></span>Model &amp; engine</button>
+          <button type="button" data-pane="checks"><span class="nav-ic c-green"><svg class="i" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.2 7.5 9.5 4.4-1.3 7.5-4.9 7.5-9.5V6Z"/><path d="m8.8 12 2.3 2.3 4.2-4.6"/></svg></span>Answer checks</button>
+          <button type="button" data-pane="memory"><span class="nav-ic c-purple"><svg class="i" viewBox="0 0 24 24"><path d="M6.5 3.5h11a1 1 0 0 1 1 1v16l-6.5-4-6.5 4v-16a1 1 0 0 1 1-1Z"/></svg></span>Memory &amp; history</button>
+          <button type="button" data-pane="files"><span class="nav-ic c-orange"><svg class="i" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2Z"/></svg></span>Files &amp; tools</button>
+          <button type="button" data-pane="screen"><span class="nav-ic c-red"><svg class="i" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="13" rx="2.5"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10.5" r="2" class="fill"/></svg></span>Screen memory</button>
+          <button type="button" data-pane="about"><span class="nav-ic c-teal"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.5"/></svg></span>About</button>
+        </nav>
+      </aside>
 
-      <section>
-        <h3>Assistant</h3>
-        <label class="field">System prompt
-          <textarea id="s-system" rows="4"></textarea>
-        </label>
-      </section>
+      <div class="set-main" id="set-main">
+        <header class="set-head"><h3 id="set-title">Appearance</h3></header>
 
-      <section>
-        <h3>Files &amp; tools</h3>
-        <label class="check"><input type="checkbox" id="s-pctool" /> Let the assistant look up this PC's services, installed updates and whether local paths exist</label>
-        <div class="hint">Read-only, so it can answer "is the Print Spooler running?" itself. It can't change anything or see other computers, and every lookup is in the activity log. Like any tool, it turns off the "unsure value" underlines (the engine can't do both).</div>
-        <label class="check"><input type="checkbox" id="s-tools" /> Let the assistant read files in approved folders</label>
-        <div id="s-folders"></div>
-        <div class="row-btns"><button type="button" id="s-add-folder">Add folder…</button></div>
-        <div class="hint">Read-only: the assistant can list, read and search text files inside these folders, nothing else. No writing, no commands, no network. Every access is recorded in the activity log.</div>
-        <div class="field">Search index
-          <div id="s-index-status" class="hint"></div>
-          <progress id="s-index-bar" max="1" value="0" hidden></progress>
-          <div class="row-btns">
-            <button type="button" id="s-index-build">Index approved folders now</button>
-            <button type="button" id="s-index-cancel" hidden>Stop</button>
-            <button type="button" id="s-index-clear">Clear index</button>
-          </div>
-          <div class="hint">Lets the assistant search by meaning across all files in the approved folders (code, configs, notes, Word, PDF). Runs on the CPU and only re-reads files that changed. Re-run after files change.</div>
+        <div class="set-pane" data-pane="appearance" data-title="Appearance">
+          <section>
+            <div class="set-row">
+              <span class="st"><b>Theme</b><small>Auto follows your Windows light/dark setting.</small></span>
+              <div class="seg-ctl" id="ap-mode" data-key="mode" role="group" aria-label="Theme">
+                <button type="button" data-v="auto">Auto</button><button type="button" data-v="light">Light</button><button type="button" data-v="dark">Dark</button>
+              </div>
+            </div>
+            <div class="set-row">
+              <span class="st"><b>Accent colour</b><small>Buttons, highlights and the glow behind the app.</small></span>
+              <div class="swatches" id="ap-accent" role="group" aria-label="Accent colour"></div>
+            </div>
+            <div class="set-row">
+              <span class="st"><b>Style</b><small>Glass: soft colour behind translucent panels. Solid: flat. OLED: pure black (dark theme).</small></span>
+              <div class="seg-ctl" id="ap-style" data-key="style" role="group" aria-label="Style">
+                <button type="button" data-v="glass">Glass</button><button type="button" data-v="solid">Solid</button><button type="button" data-v="oled">OLED</button>
+              </div>
+            </div>
+            <div class="set-row">
+              <span class="st"><b>Text size</b><small>Scales the whole window.</small></span>
+              <div class="seg-ctl" id="ap-text" data-key="text" role="group" aria-label="Text size">
+                <button type="button" data-v="s">S</button><button type="button" data-v="m">M</button><button type="button" data-v="l">L</button>
+              </div>
+            </div>
+            <div class="set-row">
+              <span class="st"><b>Motion</b><small>Reduced turns off animations (Windows' "Animation effects" setting is also respected).</small></span>
+              <div class="seg-ctl" id="ap-motion" data-key="motion" role="group" aria-label="Motion">
+                <button type="button" data-v="full">Full</button><button type="button" data-v="reduced">Reduced</button>
+              </div>
+            </div>
+            <div class="hint">Appearance changes apply and save immediately.</div>
+          </section>
+          <section>
+            <label class="check"><span class="st"><b>Memory meter in the top bar</b><small>RAM and graphics memory, updated every 5 seconds only while the window is visible.</small></span><input type="checkbox" id="s-resmeter" /></label>
+          </section>
         </div>
-        <div class="row-btns"><button type="button" id="s-audit">View activity log…</button></div>
-      </section>
 
-      <section id="s-sm" hidden>
-        <h3>Screen memory (home only, experimental)</h3>
-        <label class="check"><input type="checkbox" id="s-sm-on" /> Remember the text of the window I'm working in</label>
-        <div class="hint">
-          Reads only the window that is in front, as text, about every 30 seconds while it changes. <b>No pictures are saved.</b>
-          Passwords, keys, tokens, card numbers and one-time codes are removed before anything is stored. Windows on the list below are never read.
-          Nothing is captured while you are idle, locked, or paused. Everything stays on this computer (data\chats.db), so keep the drive encrypted.
-          It only runs while OpenPort is open, and a red dot shows in the tray and the sidebar whenever it is recording.
-          Hotkeys: <b>Ctrl+Alt+P</b> pause or resume, <b>Ctrl+Alt+M</b> remember the window in front.
+        <div class="set-pane" data-pane="general" data-title="General">
+          <section>
+            <label class="check"><span class="st"><b>Load the model when OpenPort starts</b><small>Turn off to start light and load it from the sidebar when you need it.</small></span><input type="checkbox" id="s-autoload" /></label>
+          </section>
+          <section>
+            <label class="field"><span class="st"><b>Assistant instructions</b><small>The system prompt: how the assistant should behave in every chat.</small></span>
+              <textarea id="s-system" rows="5"></textarea>
+            </label>
+          </section>
         </div>
-        <label class="check"><input type="checkbox" id="s-sm-assist" /> Let the assistant search screen memory when you ask about it ("what website was I on?"). Turn off to keep recording without giving the assistant that tool (the "unsure value" underlines need the assistant to have no tools).</label>
-        <div id="s-sm-status" class="hint"></div>
-        <div class="grid3">
-          <label class="field">Keep for (days)<input type="number" id="s-sm-days" min="1" max="30" /></label>
-          <label class="field">Look every (seconds)<input type="number" id="s-sm-interval" min="10" max="600" /></label>
+
+        <div class="set-pane" data-pane="engine" data-title="Model &amp; engine">
+          <section>
+            <label class="field row"><span class="st"><b>Run on</b><small id="s-backend-note"></small></span>
+              <select id="s-backend">
+                <option value="auto">Auto (GPU if available)</option>
+                <option value="gpu">GPU (Vulkan)</option>
+                <option value="cpu">CPU only</option>
+              </select>
+            </label>
+            <label class="field row"><span class="st"><b>Context size</b><small>How much of the chat and your files the model sees at once. Larger uses more memory.</small></span>
+              <select id="s-context">
+                <option value="4096">4,096 tokens</option>
+                <option value="8192">8,192 tokens</option>
+                <option value="16384">16,384 tokens</option>
+                <option value="32768">32,768 tokens</option>
+                <option value="65536">65,536 tokens</option>
+              </select>
+            </label>
+          </section>
+          <section>
+            <h4>Speed &amp; memory</h4>
+            <label class="check"><span class="st"><b>Copy-ahead</b><small>Much faster answers when the reply repeats your text (fix a config, edit a script). Same answer, word for word. Experimental.</small></span><input type="checkbox" id="s-copyahead" /></label>
+            <label class="check"><span class="st"><b>CPU low-memory mode</b><small>On the CPU engine, read the model straight from its file: about 14 GB instead of 23 GB of RAM for the 26B model, loads in seconds; long prompts are read about 30% slower.</small></span><input type="checkbox" id="s-cpulowmem" /></label>
+            <label class="field row"><span class="st"><b>Conversation memory precision</b><small>The engine's working memory (KV cache). 8-bit uses less memory.</small></span>
+              <select id="s-kvcache">
+                <option value="f16">16-bit (default)</option>
+                <option value="q8_0">8-bit</option>
+              </select>
+            </label>
+            <div id="s-tuning-note" class="hint">Measured with Gemma 4 26B on a Radeon RX 7800 XT: copy-ahead made "fix this config and return it" about 6x faster (64 → 396 tokens/s) with identical answers; 8-bit memory was 5–25% faster with identical answers. Changing these restarts the model.</div>
+          </section>
         </div>
-        <label class="field">Never capture a window whose program or title contains (one per line)
-          <textarea id="s-sm-exclude" rows="5"></textarea></label>
-        <div class="row-btns"><button type="button" id="s-sm-reset-exclude" class="small">Reset to the safe defaults</button>
-          <span class="hint">Password managers, private-browsing windows, sign-in pages, banking and similar are listed by default. Removing a word means windows containing it WILL be read.</span></div>
-        <div class="row-btns">
-          <button type="button" id="s-sm-pause">Pause</button>
-          <button type="button" id="s-sm-timeline">Open timeline…</button>
-          <button type="button" id="s-sm-clear" class="danger">Delete all screen memory…</button>
+
+        <div class="set-pane" data-pane="checks" data-title="Answer checks">
+          <section>
+            <div class="hint lead">After every answer, OpenPort checks what it can prove against this PC and your files. Checks only read; they never change the answer, and results are shown to you, not sent to the model.</div>
+            <label class="check"><span class="st"><b>PowerShell command checker</b><small>Every command and parameter is looked up in this PC's own PowerShell. Invented ones get a red underline and a "did you mean". Nothing from the answer is ever run.</small></span><input type="checkbox" id="s-cmdcheck" /></label>
+            <label class="check"><span class="st"><b>Edit check</b><small>When an answer returns your file or an earlier answer with changes, highlight the changed lines and list any that went missing.</small></span><input type="checkbox" id="s-editcheck" /></label>
+            <label class="check"><span class="st"><b>Claim checks</b><small>Services, installed updates, local paths, and IPs/VLANs/ports from your files, checked against this PC. Only describes this computer.</small></span><input type="checkbox" id="s-claimcheck" /></label>
+            <label class="check"><span class="st"><b>Mistake log</b><small>Remember what the checker proved and remind the model on related questions.</small></span><input type="checkbox" id="s-mistakelog" /></label>
+            <label class="check"><span class="st"><b>Underline unsure values</b><small>Numbers, IPs, versions and commands the model was unsure about. Not available while the assistant has tools (an engine limit).</small></span><input type="checkbox" id="s-smart-conf" /></label>
+          </section>
         </div>
-      </section>
 
-      <section>
-        <h3>Answer checks</h3>
-        <label class="check"><input type="checkbox" id="s-cmdcheck" /> Check PowerShell commands in answers against this PC</label>
-        <div class="hint">After each answer, every PowerShell command and parameter in it is looked up in this computer's own PowerShell. Made-up commands and wrong parameters get a red wavy underline, with a button to ask the model to fix them. Only the names are looked up: nothing from the answer is ever run. It does not check what a command does, the values, or whether it is safe.</div>
-        <label class="check"><input type="checkbox" id="s-editcheck" /> Edit check: when an answer returns your file with changes, highlight the changed lines and list any lines that went missing</label>
-        <label class="check"><input type="checkbox" id="s-mistakelog" /> Keep a mistake log and remind the model of verified facts on related questions</label>
-        <label class="check"><input type="checkbox" id="s-claimcheck" /> Check facts the answer states about this PC (services, updates, file paths, and values from files you attached)</label>
-        <div class="hint">Claim checks only read: service status, the installed-updates list, whether a local path exists, and the text of files in this conversation. Results are shown to you, not sent to the model. They describe THIS computer: if the answer is about another machine, they don't apply.</div>
-      </section>
-
-      <section>
-        <h3>Smart context (experimental)</h3>
-        <label class="check"><input type="checkbox" id="s-smart-chat" /> Recall earlier parts of long chats that no longer fit</label>
-        <label class="check"><input type="checkbox" id="s-smart-focus" /> Focus big file reads on what you asked</label>
-        <label class="check"><input type="checkbox" id="s-smart-type" /> Type-ahead: fetch context and pre-read it while you type</label>
-        <label class="check"><input type="checkbox" id="s-smart-conf" /> Underline values the model was unsure about (numbers, IPs, versions, commands). Not available while file tools or screen memory are on: the engine can't do both.</label>
-        <div class="hint">Both use the embedding model (CPU, low priority) to choose what goes into the model's limited window. Off by default. The first re-inserts old messages from the same chat when they look relevant; the second makes file tools return the matching parts of a large file instead of its first pages. You'll see a ↩ or a 🔧 line whenever they act.</div>
-      </section>
-
-      <section>
-        <h3>Memory</h3>
-        <label class="check"><input type="checkbox" id="s-memory" /> Recall relevant past chats</label>
-        <label class="field">Notes recalled per message
-          <select id="s-topk"><option>1</option><option>2</option><option>3</option><option>5</option></select>
-        </label>
-        <div id="s-memory-status" class="hint"></div>
-      </section>
-
-      <section>
-        <h3>History retention</h3>
-        <div class="grid3">
-          <label class="field">Keep for (days)<input type="number" id="s-age" min="0" /></label>
-          <label class="field">Max chats<input type="number" id="s-chats" min="0" /></label>
-          <label class="field">Max size (MB)<input type="number" id="s-size" min="0" /></label>
+        <div class="set-pane" data-pane="memory" data-title="Memory &amp; history">
+          <section>
+            <label class="check"><span class="st"><b>Recall relevant past chats</b><small>Notes from earlier chats that clearly match your question are shown to the model.</small></span><input type="checkbox" id="s-memory" /></label>
+            <label class="field row"><span class="st"><b>Notes per message</b><small>At most this many.</small></span>
+              <select id="s-topk"><option>1</option><option>2</option><option>3</option><option>5</option></select>
+            </label>
+            <div id="s-memory-status" class="hint"></div>
+          </section>
+          <section>
+            <h4>Smart context (experimental)</h4>
+            <label class="check"><span class="st"><b>Recall earlier parts of long chats</b><small>Brings back messages that no longer fit in the model's window when they look relevant.</small></span><input type="checkbox" id="s-smart-chat" /></label>
+            <label class="check"><span class="st"><b>Focus big file reads</b><small>File tools return the parts of a large file that match your question.</small></span><input type="checkbox" id="s-smart-focus" /></label>
+            <label class="check"><span class="st"><b>Type-ahead</b><small>Fetch context and pre-read it while you type, so answers start sooner.</small></span><input type="checkbox" id="s-smart-type" /></label>
+          </section>
+          <section>
+            <h4>History</h4>
+            <div class="grid3">
+              <label class="field"><span class="st"><b>Keep for (days)</b></span><input type="number" id="s-age" min="0" /></label>
+              <label class="field"><span class="st"><b>Max chats</b></span><input type="number" id="s-chats" min="0" /></label>
+              <label class="field"><span class="st"><b>Max size (MB)</b></span><input type="number" id="s-size" min="0" /></label>
+            </div>
+            <div class="hint">0 = no limit. When a limit is exceeded, the oldest chats are deleted first.</div>
+            <div id="s-history-stats" class="hint"></div>
+            <button type="button" id="s-clear" class="danger">Delete all chat history…</button>
+          </section>
         </div>
-        <div class="hint">0 = no limit. When a limit is exceeded, the oldest chats are deleted first.</div>
-        <div id="s-history-stats" class="hint"></div>
-        <button type="button" id="s-clear" class="danger">Delete all chat history…</button>
-      </section>
 
-      <menu>
-        <button type="button" id="s-cancel">Cancel</button>
-        <button type="submit" id="s-save" class="primary" value="save">Save</button>
-      </menu>
+        <div class="set-pane" data-pane="files" data-title="Files &amp; tools">
+          <section>
+            <label class="check"><span class="st"><b>Look up this PC</b><small>Lets the assistant read service status, installed updates and whether local paths exist. Read-only, logged.</small></span><input type="checkbox" id="s-pctool" /></label>
+            <label class="check"><span class="st"><b>Read files in approved folders</b><small>List, read and search text files in the folders below. No writing, no commands, no network. Every access is logged.</small></span><input type="checkbox" id="s-tools" /></label>
+            <div id="s-folders"></div>
+            <div class="row-btns"><button type="button" id="s-add-folder">Add folder…</button></div>
+          </section>
+          <section>
+            <h4>Search index</h4>
+            <div class="hint">Search by meaning across the approved folders (code, configs, notes, Word, PDF). Runs on the CPU and only re-reads changed files.</div>
+            <div id="s-index-status" class="hint"></div>
+            <progress id="s-index-bar" max="1" value="0" hidden></progress>
+            <div class="row-btns">
+              <button type="button" id="s-index-build">Index now</button>
+              <button type="button" id="s-index-cancel" hidden>Stop</button>
+              <button type="button" id="s-index-clear">Clear index</button>
+            </div>
+          </section>
+          <section>
+            <div class="set-row">
+              <span class="st"><b>Activity log</b><small>Everything the app did on this PC. Never chat text or file contents.</small></span>
+              <button type="button" id="s-audit">Open…</button>
+            </div>
+          </section>
+        </div>
+
+        <div class="set-pane" data-pane="screen" data-title="Screen memory">
+          <section id="s-sm" hidden>
+            <label class="check"><span class="st"><b>Remember the text of the window I'm working in</b><small>Home edition, experimental. A red indicator shows in the sidebar and tray whenever it records.</small></span><input type="checkbox" id="s-sm-on" /></label>
+            <div class="hint">
+              Reads only the window in front, as text, about every 30 seconds while it changes. <b>No pictures are saved.</b>
+              Passwords, keys, tokens, card numbers and one-time codes are removed before anything is stored. Nothing is captured while you
+              are idle, locked or paused, and everything stays on this computer, so keep the drive encrypted.
+              Hotkeys: <b>Ctrl+Alt+P</b> pause or resume, <b>Ctrl+Alt+M</b> remember the window in front.
+            </div>
+            <label class="check"><span class="st"><b>Let the assistant search it</b><small>For "what website was I on?". Turn off to keep recording without giving the assistant that tool (unsure-value underlines need no tools).</small></span><input type="checkbox" id="s-sm-assist" /></label>
+            <div id="s-sm-status" class="hint"></div>
+            <div class="grid3">
+              <label class="field"><span class="st"><b>Keep for (days)</b></span><input type="number" id="s-sm-days" min="1" max="30" /></label>
+              <label class="field"><span class="st"><b>Look every (seconds)</b></span><input type="number" id="s-sm-interval" min="10" max="600" /></label>
+            </div>
+            <label class="field"><span class="st"><b>Never capture windows containing</b><small>One word per line, matched against the program and title. Removing a word means those windows WILL be read.</small></span>
+              <textarea id="s-sm-exclude" rows="5"></textarea></label>
+            <div class="row-btns">
+              <button type="button" id="s-sm-reset-exclude" class="small">Reset to the safe defaults</button>
+              <button type="button" id="s-sm-pause">Pause</button>
+              <button type="button" id="s-sm-timeline">Open timeline…</button>
+              <button type="button" id="s-sm-clear" class="danger">Delete all screen memory…</button>
+            </div>
+          </section>
+        </div>
+
+        <div class="set-pane" data-pane="about" data-title="About">
+          <section class="about-card">
+            <span class="empty-mark about-mark" aria-hidden="true"></span>
+            <div>
+              <b class="about-name">OpenPort</b>
+              <div class="hint">A private AI assistant that runs on this computer and checks its own answers. Open source under the Apache License 2.0.</div>
+            </div>
+          </section>
+          <section>
+            <h4>Privacy</h4>
+            <div class="hint">The model runs here. Chats, files and screen text stay in the <code>data</code> folder next to the app. The app blocks all network access except model downloads you start yourself, and every tool use is recorded in the activity log.</div>
+          </section>
+          <section>
+            <h4>Keyboard shortcuts</h4>
+            <div class="keys-grid">
+              <span>Command palette</span><kbd>Ctrl K</kbd>
+              <span>New chat</span><kbd>Ctrl N</kbd>
+              <span>Settings</span><kbd>Ctrl ,</kbd>
+              <span>Show or hide the sidebar</span><kbd>Ctrl B</kbd>
+              <span>Keyboard shortcuts</span><kbd>Ctrl /</kbd>
+              <span>Send</span><kbd>Enter</kbd>
+              <span>New line</span><kbd>Shift Enter</kbd>
+            </div>
+          </section>
+        </div>
+
+        <menu>
+          <button type="button" id="s-cancel">Cancel</button>
+          <button type="submit" id="s-save" class="primary" value="save">Save</button>
+        </menu>
+      </div>
     </form>
   </dialog>
 
@@ -409,6 +510,34 @@
     </div>
   </dialog>
 
+  <dialog id="palette" class="palette" aria-label="Command palette">
+    <div class="pal-search">
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="pal-q" type="text" placeholder="Type a command, a setting or a chat…" aria-label="Command" autocomplete="off" spellcheck="false" />
+      <kbd>Esc</kbd>
+    </div>
+    <div id="pal-list" class="pal-list" role="listbox"></div>
+    <div class="pal-foot"><span><kbd>↑</kbd><kbd>↓</kbd> to move</span><span><kbd>Enter</kbd> to open</span></div>
+  </dialog>
+
+  <dialog id="keys-dlg" aria-label="Keyboard shortcuts">
+    <div class="dlg-body">
+      <div class="dlg-head"><h2>Keyboard shortcuts</h2><button type="button" id="keys-close">Done</button></div>
+      <div class="keys-grid">
+        <span>Command palette: actions, settings, chats</span><kbd>Ctrl K</kbd>
+        <span>New chat</span><kbd>Ctrl N</kbd>
+        <span>Settings</span><kbd>Ctrl ,</kbd>
+        <span>Show or hide the sidebar</span><kbd>Ctrl B</kbd>
+        <span>This list</span><kbd>Ctrl /</kbd>
+        <span>Send the message</span><kbd>Enter</kbd>
+        <span>New line in the message</span><kbd>Shift Enter</kbd>
+        <span>Close a window or the palette</span><kbd>Esc</kbd>
+        <span>Pause or resume screen memory (home edition)</span><kbd>Ctrl Alt P</kbd>
+        <span>Remember the window in front (home edition)</span><kbd>Ctrl Alt M</kbd>
+      </div>
+    </div>
+  </dialog>
+
   <script src="vendor/marked.umd.js"></script>
   <script src="vendor/purify.min.js"></script>
   <script src="promptplan.js"></script>
@@ -429,5 +558,8 @@
   <script src="claims-ui.js"></script>
   <script src="layout.js"></script>
   <script src="resmeter.js"></script>
+  <script src="appearance.js"></script>
+  <script src="settings-ui.js"></script>
+  <script src="palette.js"></script>
 </body>
 </html>

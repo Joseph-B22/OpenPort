@@ -112,7 +112,7 @@ function markCommandProblems(root, items) {
   for (const code of codes) {
     const walker = document.createTreeWalker(code, NodeFilter.SHOW_TEXT);
     const nodes = [];
-    for (let n; (n = walker.nextNode());) if (!n.parentElement.closest('.copy, .cmd-bad, .cmd-unverified')) nodes.push(n);
+    for (let n; (n = walker.nextNode());) if (!n.parentElement.closest('.copy, .code-head, .cmd-bad, .cmd-unverified')) nodes.push(n);
     for (const node of nodes) {
       // Every occurrence of every problem token in this text node, then wrap them from the end so offsets stay valid.
       const hits = [];
